@@ -64,9 +64,11 @@ jobs:
           SNAPSHOT_NAME=$(echo "$RESPONSE" | jq -r '.images[0].description')
           SNAPSHOT_SIZE=$(echo "$RESPONSE" | jq -r '.images[0].image_size')
 
-          echo "snapshot_id=$SNAPSHOT_ID" >> $GITHUB_OUTPUT
-          echo "snapshot_name=$SNAPSHOT_NAME" >> $GITHUB_OUTPUT
-          echo "snapshot_size=$SNAPSHOT_SIZE" >> $GITHUB_OUTPUT
+          {
+            echo "snapshot_id=$SNAPSHOT_ID"
+            echo "snapshot_name=$SNAPSHOT_NAME"
+            echo "snapshot_size=$SNAPSHOT_SIZE"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -146,7 +148,7 @@ jobs:
             - **Kernel**: 6.12.63
             - **Architecture**: x86_64
             - **Cloud Provider**: Hetzner Cloud
-            - **Build Tool**: Packer ${{ steps.packer.outputs.version }}
+            - **Build Tool**: Packer 1.11.2
 
             ### 🐛 Issues?
 
@@ -176,7 +178,7 @@ jobs:
             jq -r '.images[] | select(.labels.created_by == "packer") | .id')
 
           # Keep the 3 most recent, delete the rest
-          echo "$SNAPSHOTS" | tail -n +4 | while read id; do
+          echo "$SNAPSHOTS" | tail -n +4 | while read -r id; do
             echo "Deleting old snapshot: $id"
             curl -X DELETE -H "Authorization: Bearer ${{ secrets.HCLOUD_TOKEN }}" \
               "https://api.hetzner.cloud/v1/images/$id"

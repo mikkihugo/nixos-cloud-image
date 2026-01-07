@@ -81,8 +81,8 @@ jobs:
           echo "Compressing image with xz..."
           xz -9 -v result/nixos.img
           ls -lh result/
-          echo "IMAGE_PATH=$(pwd)/result/nixos.img.xz" >> $GITHUB_ENV
-          echo "IMAGE_SIZE=$(du -h result/nixos.img.xz | cut -f1)" >> $GITHUB_ENV
+          echo "IMAGE_PATH=$(pwd)/result/nixos.img.xz" >> "$GITHUB_ENV"
+          echo "IMAGE_SIZE=$(du -h result/nixos.img.xz | cut -f1)" >> "$GITHUB_ENV"
 
       - name: Install hcloud CLI
         run: |
@@ -114,11 +114,13 @@ jobs:
           # Get the snapshot ID
           sleep 5
           SNAPSHOT_ID=$(hcloud image list -o json | \
-            jq -r '.[] | select(.description == "'$IMAGE_NAME'") | .id' | \
+            jq -r '.[] | select(.description == "'"$IMAGE_NAME"'") | .id' | \
             head -1)
 
-          echo "SNAPSHOT_ID=$SNAPSHOT_ID" >> $GITHUB_ENV
-          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          {
+            echo "SNAPSHOT_ID=$SNAPSHOT_ID"
+            echo "IMAGE_NAME=$IMAGE_NAME"
+          } >> "$GITHUB_ENV"
 
           echo "✓ Image uploaded: $SNAPSHOT_ID"
 
@@ -166,7 +168,7 @@ jobs:
 
           hcloud image list -o json | \
             jq -r '.[] | select(.labels.created_by == "github-actions") | .id' | \
-            tail -n +4 | while read id; do
+            tail -n +4 | while read -r id; do
               echo "Deleting old snapshot: $id"
               hcloud image delete "$id"
             done
