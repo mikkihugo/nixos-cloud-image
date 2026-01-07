@@ -1,15 +1,8 @@
 name: Build NixOS Hetzner Image
 
 on:
-  # No scheduled builds - netboot image downloads latest NixOS on first boot anyway
-  # Only rebuild when configuration changes or manually triggered
-  push:
-    branches: [main]
-    paths:
-      - '**.nix'
-      - '**.pkr.hcl'
-      - 'scripts/**'
-      - '.github/workflows/build-image.yml'
+  # Manual trigger only - prevents rebuilding on every commit
+  # Run via: gh workflow run build-image.yml
   workflow_dispatch:
     inputs:
       image_name:
