@@ -16,7 +16,7 @@ Both methods produce identical NixOS images, but use different approaches.
 ```
 GitHub Actions
   ↓
-Starts Hetzner cx23 server ($0.0048/hour)
+Starts Hetzner cx33 server ($0.0080/hour)
   ↓
 Boots into rescue mode (live Linux)
   ↓
@@ -50,7 +50,7 @@ Snapshot ready! (~$0.05 total cost)
 ### Tested How?
 
 ```bash
-# Real Hetzner server (cx23)
+# Real Hetzner server (cx33)
 # ↓ Install NixOS from scratch
 # ↓ If it boots, it works
 # ↓ Snapshot = Known-good system
