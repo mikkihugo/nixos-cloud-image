@@ -138,9 +138,60 @@ This uses a **netboot-style bootstrap** approach:
 
 ## 📖 Documentation
 
-- [Configuration Reference](docs/configuration.md)
-- [Customization Guide](docs/customization.md)
-- [Troubleshooting](docs/troubleshooting.md)
+- **[Cloud-Init Options](docs/cloud-init-options.md)** - Customize NixOS version, swap, and more
+- [Configuration Reference](docs/configuration.md) - Modify configuration.nix
+- [Customization Guide](docs/customization.md) - Add packages, services, users
+- [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
+
+## ⚙️ Customization
+
+### Change NixOS Version
+
+The image auto-detects the latest stable by default. To use a specific version:
+
+```yaml
+# user-data.yaml
+#cloud-config
+bootcmd:
+  - |
+    if [ ! -e /root/.nix-channels ]; then
+      # Use NixOS 25.11 specifically
+      nix-channel --add https://nixos.org/channels/nixos-25.11 nixos
+      nix-channel --update
+    fi
+```
+
+Deploy with custom config:
+```bash
+hcloud server create \
+  --type cx11 \
+  --image IMAGE_ID \
+  --name my-server \
+  --user-data-from-file user-data.yaml
+```
+
+### Fixed Swap Size
+
+Default is smart sizing (2-16GB based on RAM). To set a fixed size:
+
+```yaml
+# user-data.yaml
+#cloud-config
+bootcmd:
+  - |
+    if [ ! -f /swapfile ]; then
+      # Fixed 8GB swap
+      fallocate -l 8G /swapfile
+      chmod 600 /swapfile
+      mkswap /swapfile
+      swapon /swapfile
+      echo "/swapfile none swap sw 0 0" >> /etc/fstab
+      echo "vm.swappiness=10" >> /etc/sysctl.conf
+      sysctl -p
+    fi
+```
+
+**See [Cloud-Init Options](docs/cloud-init-options.md) for all customization options!**
 
 ## 🙏 Credits
 
