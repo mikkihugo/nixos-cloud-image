@@ -25,7 +25,7 @@ variable "image_name" {
 
 variable "server_type" {
   type        = string
-  default     = "cpx21"
+  default     = "cx23"
   description = "Server type for building (needs 4GB+ RAM for NixOS installation)"
 }
 

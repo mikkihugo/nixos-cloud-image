@@ -16,7 +16,7 @@ Both methods produce identical NixOS images, but use different approaches.
 ```
 GitHub Actions
   ↓
-Starts Hetzner cpx21 server ($0.0145/hour)
+Starts Hetzner cx23 server ($0.0048/hour)
   ↓
 Boots into rescue mode (live Linux)
   ↓
@@ -43,14 +43,14 @@ Snapshot ready! (~$0.05 total cost)
 
 ### Cons
 
-⚠️ **Costs money** - €0.01-0.05 per build (~€2/year for weekly builds)
+⚠️ **Costs money** - €0.002-0.01 per build (~€0.50/year for weekly builds)
 ⚠️ **Slower** - ~20 minutes per build
 ⚠️ **Needs Hetzner** - Can't build offline/locally easily
 
 ### Tested How?
 
 ```bash
-# Real Hetzner server (cpx21)
+# Real Hetzner server (cx23)
 # ↓ Install NixOS from scratch
 # ↓ If it boots, it works
 # ↓ Snapshot = Known-good system
