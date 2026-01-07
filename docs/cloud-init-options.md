@@ -277,7 +277,7 @@ bootcmd:
 **Deploy:**
 ```bash
 hcloud server create \
-  --type cx22 \
+  --type cpx21 \
   --image IMAGE_ID \
   --name production-server \
   --location nbg1 \
