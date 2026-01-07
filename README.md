@@ -162,24 +162,35 @@ This repository offers **two build methods**, both automated via GitHub Actions:
 
 ### Setup Automated Builds
 
-1. **Fork this repository**
+⚠️ **Important:** GitHub Actions require manual setup after pushing!
 
-2. **Add secrets** (Settings → Secrets → Actions):
+1. **Push this repository to GitHub**
+   ```bash
+   gh repo create nixos-hetzner-image --public --source=. --remote=origin --push
    ```
-   HCLOUD_TOKEN = your_hetzner_api_token
-   ```
 
-3. **Enable GitHub Actions**
-   - Go to Actions tab → Enable workflows
+2. **Enable GitHub Actions** (Settings → Actions → General)
+   - Select "Allow all actions and reusable workflows"
+   - Click Save
 
-4. **Choose your workflow**:
-   - **Recommended**: Enable `build-with-nix.yml` (free, faster)
-   - **Alternative**: Enable `build-image.yml` (costs ~€0.01/build)
+3. **Add Hetzner API token** (Settings → Secrets → Actions)
+   - Name: `HCLOUD_TOKEN`
+   - Value: Your Hetzner Cloud API token
+   - Get token: https://console.hetzner.cloud/ → Security → API Tokens
 
-5. **Builds run automatically**:
+4. **Test the workflow**
+   - Go to Actions tab
+   - Select a workflow
+   - Click "Run workflow"
+   - **Recommended for first test**: Use "Build NixOS Hetzner Image" (Packer)
+   - GitHub runner workflow might need additional setup
+
+5. **Builds run automatically after first success**:
    - Weekly on Sundays at 3 AM UTC
    - On push to configuration files
    - Manual trigger anytime
+
+📖 **Detailed setup guide**: See [docs/SETUP.md](docs/SETUP.md)
 
 ### Manual Trigger
 
