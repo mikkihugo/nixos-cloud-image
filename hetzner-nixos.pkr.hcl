@@ -31,8 +31,8 @@ variable "server_type" {
 
 variable "location" {
   type        = string
-  default     = "nbg1"
-  description = "Hetzner datacenter location"
+  default     = "fsn1"
+  description = "Hetzner datacenter location (fsn1=Falkenstein, nbg1=Nuremberg)"
 }
 
 source "hcloud" "nixos" {
