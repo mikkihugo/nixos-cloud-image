@@ -17,7 +17,7 @@ Automated builds of minimal, netboot-style NixOS images for Hetzner Cloud.
 
 ```bash
 # Get latest image ID from releases
-IMAGE_ID=347588142  # See releases for latest
+IMAGE_ID=347616916  # See releases for latest
 
 hcloud server create \
   --type cx11 \
