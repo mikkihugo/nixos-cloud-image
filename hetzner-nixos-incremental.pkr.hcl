@@ -80,8 +80,8 @@ build {
   provisioner "shell" {
     inline = [
       "echo '=== Incremental NixOS Update ==='",
-      # Always set up nixpkgs channel (netboot image has skeleton but not actual channel data)
-      "echo 'Setting up nixpkgs channel...'",
+      # Set up channels for build (needed for nixos-rebuild)
+      "echo 'Setting up nixpkgs channel for build...'",
       "nix-channel --add https://nixos.org/channels/nixos-25.11 nixos",
       "nix-channel --update",
       "echo 'Copying configuration files...'",
@@ -90,7 +90,9 @@ build {
       "echo 'Running nixos-rebuild...'",
       "nixos-rebuild boot",  # Rebuild for next boot
       "echo 'Cleaning up...'",
-      "nix-collect-garbage -d",  # Cleanup
+      "nix-collect-garbage",  # Cleanup unreferenced packages
+      "echo 'Removing channel config (cloud-init will download fresh on first boot)...'",
+      "rm -f /root/.nix-channels",  # Cloud-init will recreate and download latest
       "echo '=== Build Complete ==='",
     ]
   }

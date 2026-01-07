@@ -40,10 +40,11 @@
   services.openssh.settings.PermitRootLogin = "prohibit-password";
   services.openssh.settings.PasswordAuthentication = false;
 
-  # Bootstrap essentials only
-  # curl: for downloading nixpkgs channel on first boot
+  # Bootstrap essentials - minimal but functional
+  # git: for cloning configuration repos (ai-dev, etc.)
+  # curl: for downloading from web/APIs
   # Everything else downloads on-demand from binary cache
-  environment.systemPackages = with pkgs; [ curl ];
+  environment.systemPackages = with pkgs; [ git curl ];
   environment.defaultPackages = [ ];
 
   # Strip ALL documentation to minimize image size

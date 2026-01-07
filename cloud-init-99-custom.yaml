@@ -14,6 +14,67 @@ bootcmd:
       nix-channel --update
     fi
 
+  # Install SOPS age key if provided via user-data
+  - |
+    if [ -f /tmp/sops-age-key.txt ]; then
+      echo "Installing SOPS age key..."
+      mkdir -p /root/.config/sops/age
+      chmod 700 /root/.config/sops/age
+      mv /tmp/sops-age-key.txt /root/.config/sops/age/keys.txt
+      chmod 600 /root/.config/sops/age/keys.txt
+      echo "✅ SOPS age key installed - server can now decrypt secrets"
+    fi
+
+  # Configure GitHub PAT for private repos if provided
+  - |
+    if [ -f /tmp/github-pat.txt ]; then
+      echo "Configuring GitHub authentication..."
+      GITHUB_PAT=$(cat /tmp/github-pat.txt)
+
+      # Configure git to use PAT for HTTPS
+      git config --global credential.helper store
+      echo "https://${GITHUB_PAT}@github.com" > /root/.git-credentials
+      chmod 600 /root/.git-credentials
+
+      # Also set up GitHub CLI if needed
+      mkdir -p /root/.config/gh
+      cat > /root/.config/gh/hosts.yml <<EOF
+    github.com:
+        oauth_token: ${GITHUB_PAT}
+        user: $(echo $GITHUB_PAT | cut -c1-10)...
+        git_protocol: https
+    EOF
+      chmod 600 /root/.config/gh/hosts.yml
+
+      rm /tmp/github-pat.txt
+      echo "✅ GitHub PAT configured - can clone private repos"
+    fi
+
+  # Auto-clone repository if specified
+  - |
+    if [ -f /tmp/repo-url.txt ]; then
+      REPO_URL=$(cat /tmp/repo-url.txt)
+      CLONE_DIR=$(cat /tmp/repo-dir.txt 2>/dev/null || echo "/root/$(basename $REPO_URL .git)")
+
+      echo "Cloning repository: $REPO_URL"
+      git clone "$REPO_URL" "$CLONE_DIR"
+
+      rm /tmp/repo-url.txt
+      [ -f /tmp/repo-dir.txt ] && rm /tmp/repo-dir.txt
+
+      echo "✅ Repository cloned to $CLONE_DIR"
+
+      # If it's a NixOS flake, optionally rebuild
+      if [ -f /tmp/auto-rebuild.txt ] && [ -f "$CLONE_DIR/flake.nix" ]; then
+        echo "Auto-rebuilding NixOS from $CLONE_DIR..."
+        cd "$CLONE_DIR"
+        FLAKE_NAME=$(cat /tmp/auto-rebuild.txt)
+        nixos-rebuild switch --flake ".#${FLAKE_NAME}"
+        rm /tmp/auto-rebuild.txt
+        echo "✅ NixOS rebuilt from repository"
+      fi
+    fi
+
   # Smart swap based on instance RAM
   - |
     if [ ! -f /swapfile ]; then
