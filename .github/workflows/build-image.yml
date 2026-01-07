@@ -41,11 +41,13 @@ jobs:
         env:
           HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
 
-      - name: Build NixOS image
+      - name: Build NixOS image (incremental - 3 min)
         run: |
+          # Use incremental build (3 min) - NixOS determinism ensures same result
+          # Only use hetzner-nixos.pkr.hcl (25 min) for first-time base creation
           packer build \
             -var "image_name=${IMAGE_NAME}-$(date +%Y%m%d-%H%M)" \
-            hetzner-nixos.pkr.hcl
+            hetzner-nixos-incremental.pkr.hcl
         env:
           HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
 
