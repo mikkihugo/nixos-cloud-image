@@ -17,10 +17,21 @@
         modules = [
           ./configuration.nix
           ({ config, lib, pkgs, ... }: {
-            # Minimal system for image building
             system.stateVersion = "25.11";
           })
         ];
+      };
+
+      # Disk image package for GitHub runner builds
+      # Produces a downloadable .img file
+      packages.x86_64-linux.diskImage = let
+        config = self.nixosConfigurations.hetzner.config;
+      in pkgs.callPackage "${nixpkgs}/nixos/lib/make-disk-image.nix" {
+        inherit pkgs config;
+        lib = nixpkgs.lib;
+        diskSize = 4096;  # 4GB (will auto-resize on first boot)
+        format = "raw";
+        partitionTableType = "legacy";  # MBR for maximum compatibility
       };
 
       # Development shell for macOS and Linux

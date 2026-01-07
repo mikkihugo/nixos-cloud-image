@@ -1,0 +1,158 @@
+name: Build NixOS Disk Image (GitHub Runner)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_name:
+        description: 'Custom image name (optional)'
+        required: false
+        default: 'nixos-25.11-netboot'
+
+env:
+  IMAGE_NAME: ${{ github.event.inputs.image_name || 'nixos-25.11-netboot' }}
+
+permissions:
+  contents: write  # Required for creating releases
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v26
+        with:
+          nix_path: nixpkgs=channel:nixos-25.11
+
+      - name: Build NixOS disk image
+        run: |
+          echo "Building NixOS disk image..."
+          nix build .#diskImage --show-trace
+
+          # Get the output path (result is a symlink to the .img file)
+          IMAGE_PATH=$(readlink -f result)
+          echo "Built image at: $IMAGE_PATH"
+
+          # Get image size
+          IMAGE_SIZE=$(stat -c%s "$IMAGE_PATH/nixos.img")
+          IMAGE_SIZE_MB=$((IMAGE_SIZE / 1024 / 1024))
+          echo "Image size: ${IMAGE_SIZE_MB}MB"
+
+          echo "image_path=$IMAGE_PATH" >> $GITHUB_OUTPUT
+          echo "image_size_mb=$IMAGE_SIZE_MB" >> $GITHUB_OUTPUT
+        id: build
+
+      - name: Compress disk image
+        run: |
+          echo "Compressing disk image..."
+          cp ${{ steps.build.outputs.image_path }}/nixos.img nixos-25.11-netboot.img
+
+          # Compress with xz (best compression)
+          xz -9 -T0 nixos-25.11-netboot.img
+
+          COMPRESSED_SIZE=$(stat -c%s "nixos-25.11-netboot.img.xz")
+          COMPRESSED_SIZE_MB=$((COMPRESSED_SIZE / 1024 / 1024))
+
+          echo "Compressed size: ${COMPRESSED_SIZE_MB}MB"
+          echo "compressed_size_mb=$COMPRESSED_SIZE_MB" >> $GITHUB_OUTPUT
+        id: compress
+
+      - name: Create GitHub Release with Disk Image
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: runner-build-${{ github.run_number }}
+          name: NixOS 25.11 Netboot Disk Image - Build #${{ github.run_number }}
+          body: |
+            ## 💿 NixOS 25.11 Netboot Disk Image (GitHub Runner Build)
+
+            **Image Size**: ${{ steps.build.outputs.image_size_mb }}MB (raw)
+            **Compressed**: ${{ steps.compress.outputs.compressed_size_mb }}MB (xz)
+            **Build Date**: ${{ github.event.head_commit.timestamp }}
+            **Commit**: ${{ github.sha }}
+
+            ---
+
+            ### 🚀 Quick Deploy to Hetzner
+
+            **Download and deploy:**
+            ```bash
+            # Download the compressed image
+            wget https://github.com/${{ github.repository }}/releases/download/runner-build-${{ github.run_number }}/nixos-25.11-netboot.img.xz
+
+            # Decompress
+            xz -d nixos-25.11-netboot.img.xz
+
+            # Upload to Hetzner Cloud (requires hcloud CLI)
+            hcloud image create \
+              --type raw \
+              --name nixos-25.11-netboot-$(date +%Y%m%d) \
+              --description "NixOS 25.11 netboot - runner build ${{ github.run_number }}" \
+              --file nixos-25.11-netboot.img
+
+            # Get the image ID from output, then create server
+            hcloud server create \
+              --type cx11 \
+              --image YOUR_IMAGE_ID \
+              --name my-nixos-server \
+              --location nbg1 \
+              --ssh-key YOUR_KEY
+            ```
+
+            **Or use directly on other cloud providers:**
+            - AWS: Convert to AMI with `qemu-img convert`
+            - DigitalOcean: Upload as custom image
+            - Proxmox/VMware: Use directly as disk image
+
+            ---
+
+            ### ✨ Features
+
+            - ✅ **Size**: ${{ steps.compress.outputs.compressed_size_mb }}MB compressed
+            - ✅ **Auto-upgrade**: Downloads latest NixOS stable on first boot
+            - ✅ **Smart swap**: 2-16GB based on instance RAM
+            - ✅ **Cloud-init**: Full metadata support
+            - ✅ **Auto-resize**: Expands to any disk size
+            - ✅ **Portable**: Works on any cloud provider or hypervisor
+
+            ### 📦 What's Included
+
+            **Bootstrap (in image):**
+            - Linux kernel 6.12+ with minimal virtio drivers
+            - Nix package manager with flakes
+            - curl for downloads
+            - cloud-init
+            - OpenSSH server
+
+            **Downloads on first boot:**
+            - Latest NixOS 25.11 channel (~450MB)
+            - Updates to all packages
+
+            ### 📋 Image Details
+
+            - **NixOS Version**: 25.11 (Xantusia)
+            - **Kernel**: 6.12.63
+            - **Architecture**: x86_64
+            - **Format**: Raw disk image (.img)
+            - **Build Tool**: Nix on GitHub Runner
+            - **Build Cost**: $0.00 (free)
+
+            ### 🆚 vs Hetzner Snapshot
+
+            This is a **downloadable disk image** that you can:
+            - Use on any cloud provider
+            - Run locally in VMs
+            - Convert to other formats (QCOW2, VMDK, VHD)
+
+            For Hetzner-only deployments, use the **Packer snapshot** method instead (faster, just reference snapshot ID).
+
+            ### 🐛 Issues?
+
+            Report issues at: https://github.com/${{ github.repository }}/issues
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+          files: |
+            nixos-25.11-netboot.img.xz
