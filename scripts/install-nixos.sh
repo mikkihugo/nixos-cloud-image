@@ -14,23 +14,21 @@ echo "Formatting filesystem..."
 mkfs.ext4 -L nixos /dev/sda1
 mount /dev/sda1 /mnt
 
-# Download NixOS installer
-echo "Downloading NixOS 25.11 installer..."
-cd /root
-wget -q --show-progress https://channels.nixos.org/nixos-25.11/latest-nixos-minimal-x86_64-linux.iso
+# Install Nix package manager
+echo "Installing Nix package manager..."
+curl -L https://nixos.org/nix/install | sh -s -- --daemon --yes
 
-# Mount ISO and setup NixOS tools
-echo "Mounting NixOS ISO..."
-mkdir -p /mnt-iso
-mount -o loop latest-nixos-minimal-x86_64-linux.iso /mnt-iso
+# Source Nix environment
+. /root/.nix-profile/etc/profile.d/nix.sh
 
-# Extract and prepare Nix
-echo "Preparing Nix environment..."
-mkdir -p /nix
-mount --bind /mnt-iso/nix /nix
+# Add nixos-install-tools channel
+echo "Setting up NixOS 25.11 channel..."
+nix-channel --add https://nixos.org/channels/nixos-25.11 nixos
+nix-channel --update
 
-# Add NixOS tools to PATH
-export PATH="/nix/var/nix/profiles/system/sw/bin:$PATH"
+# Install nixos-install-tools
+echo "Installing NixOS installation tools..."
+nix-env -iA nixos.nixos-install-tools
 
 # Generate hardware configuration
 echo "Generating NixOS configuration..."
