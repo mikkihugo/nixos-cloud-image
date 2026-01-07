@@ -71,12 +71,28 @@ cd nixos-hetzner-image
 # Set your Hetzner token
 export HCLOUD_TOKEN="your-token-here"
 
-# Initialize Packer
-packer init .
+# Option 1: Automated build + test + cleanup
+make all
 
-# Build the image
+# Option 2: Manual steps
+make init      # Initialize Packer
+make validate  # Validate config
+make build     # Build image (~15-20 min)
+make test      # Test the image
+make clean     # Clean up old snapshots
+
+# Option 3: Using Packer directly
+packer init .
 packer build hetzner-nixos.pkr.hcl
 ```
+
+**Available Make targets:**
+- `make all` - Full automated cycle (build, test, cleanup)
+- `make build` - Build the image only
+- `make test` - Test latest snapshot by creating a server
+- `make clean` - Delete old snapshots (keep last 3)
+- `make list` - Show all automated snapshots
+- `make purge` - Delete ALL automated snapshots (⚠️ destructive)
 
 ### Customize the image
 
